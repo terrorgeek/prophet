@@ -11,10 +11,12 @@ namespace :training do
         'Authorization' => "Bearer #{Constants::EXPERT_AI_APIKEY}",
       })
 
-    token = auth_res.token
+    token = auth_res.body
 
     Message.all.each do |message|
       document = JSON.generate({ document: { text: message.body } })
+      trained_message = message.build_trained_message
+      base_train = BaseTrain.new
       Constants::ENDPOINTS.each do |k, v|
         v.keys.each do |sub_type|
           res = RestClient.post(
@@ -23,9 +25,11 @@ namespace :training do
               'Content-Type' => 'application/json; charset=utf-8', 
               'Authorization' => "Bearer #{token}",
           })
-          k.to_s.camelize.new(sub_type, res.body).persist!
+          new_trained_message = base_train.assign(k, sub_type, JSON.parse(res.body))
+          trained_message = TrainedMessage.new(base_train.not_nil_keys(trained_message).merge(base_train.not_nil_keys(new_trained_message)))
         end
       end
+      trained_message.save!
     end
 
 
