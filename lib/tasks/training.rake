@@ -23,7 +23,7 @@ namespace :training do
               'Content-Type' => 'application/json; charset=utf-8', 
               'Authorization' => "Bearer #{token}",
           })
-          k.to_s.camelize.new(sub_type).train(res.body).persist!
+          k.to_s.camelize.new(sub_type, res.body).persist!
         end
       end
     end
